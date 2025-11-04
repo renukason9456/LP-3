@@ -1,0 +1,46 @@
+Write a program non-recursive and recursive program to calculate
+Fibonacci numbers and analyze their time and space complexity
+🧩 1️⃣ Recursive Fibonacci (Python)
+# Recursive Fibonacci Function
+def fibonacci_recursive(n):
+    if n <= 1:
+        return n
+    return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)
+
+# Driver Code
+n = 10
+print("Recursive Fibonacci Series up to", n, ":")
+for i in range(n):
+    print(fibonacci_recursive(i), end=" ")
+
+⏱️ Time Complexity:
+
+Each call generates two subcalls ⇒ O(2ⁿ) (Exponential)
+
+💾 Space Complexity:
+
+Maximum depth of recursion = n
+➡️ O(n)
+
+⚙️ 2️⃣ Non-Recursive (Iterative) Fibonacci (Python)
+# Non-Recursive Fibonacci Function
+def fibonacci_iterative(n):
+    a, b = 0, 1
+    print(a, b, end=" ")
+    for i in range(2, n):
+        c = a + b
+        print(c, end=" ")
+        a, b = b, c
+
+# Driver Code
+n = 10
+print("\nNon-Recursive Fibonacci Series up to", n, ":")
+fibonacci_iterative(n)
+
+⏱️ Time Complexity:
+
+Single loop runs (n−2) times ⇒ O(n)
+
+💾 Space Complexity:
+
+Only a few variables used ⇒ O(1)
