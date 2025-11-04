@@ -1,0 +1,172 @@
+!pip install pandas numpy matplotlib seaborn scikit-learn jupyter
+#Importing the required libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+#import dependencies
+
+import pandas as pd
+import numpy as np
+#import plotly.express as px
+
+ 
+
+#load the data into a dataframe
+df = pd.read_csv('uber.csv')
+#df1 = pd.read_csv('uber.csv')
+
+
+#check the first 5 rows
+df.head()
+#print Dataset
+print("Original Dataset")
+print(df)
+
+
+#Data Preprocessing
+
+#drop the unnecessary columns
+
+#df = df.drop(columns=(['Unnamed: 0', 'key','pickup_datetime','pickup_longitude', 'pickup_latitude', 'dropoff_longitude', 'dropoff_latitude']))
+df = df.drop(['Unnamed: 0', 'key'], axis= 1) #To drop unnamed column as it isn't required
+print("Dataset after dropping the unnecessary columns")
+print(df)
+print(df.dtypes) #To get the type of each column
+print(df.shape) #To get the total (Rows,Columns)
+print(df.describe()) #To get statistics of each columns
+# Filling Missing Values
+df.isnull().sum()
+
+df['dropoff_latitude'].fillna(value=df['dropoff_latitude'].mean(),inplace = True)
+df['dropoff_longitude'].fillna(value=df['dropoff_longitude'].median(),inplace = True)
+df.isnull().sum()
+print(df.dtypes)
+#Column pickup_datetime is in wrong format (Object). Convert it to DateTime Format
+df.pickup_datetime = pd.to_datetime(df.pickup_datetime, errors='coerce')
+print(df.dtypes)
+df= df.assign(hour = df.pickup_datetime.dt.hour,
+             day= df.pickup_datetime.dt.day,
+             month = df.pickup_datetime.dt.month,
+             year = df.pickup_datetime.dt.year,
+             dayofweek = df.pickup_datetime.dt.dayofweek)
+print(df)
+# drop the column 'pickup_daetime' using drop()
+# 'axis = 1' drops the specified column
+
+df = df.drop('pickup_datetime',axis=1)
+print(df)
+#Checking outliers and filling them
+#plt.plot(kind = "box",subplots = True,layout = (7,2),figsize=(15,20)) #Boxplot to check the outliers
+
+
+#Using the InterQuartile Range to fill the values
+def remove_outlier(df1 , col):
+    Q1 = df1[col].quantile(0.25)
+    Q3 = df1[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_whisker = Q1-1.5*IQR
+    upper_whisker = Q3+1.5*IQR
+    df[col] = np.clip(df1[col] , lower_whisker , upper_whisker)
+    return df1
+
+def treat_outliers_all(df1 , col_list):
+    for c in col_list:
+        df1 = remove_outlier(df , c)
+    return df1
+
+df = treat_outliers_all(df , df.iloc[: , 0::])
+print("Outliers")
+print(df)
+
+#pip install haversine
+import haversine as hs  #Calculate the distance using Haversine to calculate the distance between to points. Can't use Eucladian as it is for flat surface.
+travel_dist = []
+for pos in range(len(df['pickup_longitude'])):
+        long1,lati1,long2,lati2 = [df['pickup_longitude'][pos],df['pickup_latitude'][pos],df['dropoff_longitude'][pos],df['dropoff_latitude'][pos]]
+        loc1=(lati1,long1)
+        loc2=(lati2,long2)
+        c = hs.haversine(loc1,loc2)
+        travel_dist.append(c)
+    
+#print(travel_dist)
+df['dist_travel_km'] = travel_dist
+print("Distance Calculated")
+print(df)
+#Function to find the correlation
+corr = df.corr()
+print("Correlation");
+print(corr);
+
+#Dividing the dataset into feature and target values
+
+#x = df[['pickup_longitude','pickup_latitude','dropoff_longitude','dropoff_latitude','passenger_count','hour','day','month','year','dayofweek','dist_travel_km']]
+x = df[['dist_travel_km']]
+
+y = df['fare_amount']
+
+#Dividing the dataset into training and testing dataset
+
+from sklearn.model_selection import train_test_split
+X_train,X_test,y_train,y_test = train_test_split(x,y,test_size = 0.33)
+
+#Linear Regression
+from sklearn.linear_model import LinearRegression
+regression = LinearRegression()
+
+
+regression.fit(X_train,y_train)
+#To find the linear intercept
+print("#To find the linear intercept");
+print(regression.intercept_)
+
+#To find the linear coeeficient
+print("#To find the linear coeeficient");
+print(regression.coef_);
+
+#To predict the target values
+prediction = regression.predict(X_test)
+print("Prediction")
+print(prediction)
+
+print("Y Test ")
+print(y_test)
+
+#Metrics Evaluation using R2, Mean Squared Error, Root Mean Sqared Error
+
+from sklearn.metrics import r2_score
+print("R2 Score")
+print(r2_score(y_test,prediction))
+print("MSE")
+from sklearn.metrics import mean_squared_error
+MSE = mean_squared_error(y_test,prediction)
+print(MSE)
+print("RMSE")
+RMSE = np.sqrt(MSE)
+print(RMSE)
+
+#Random Forest Regression
+
+from sklearn.ensemble import RandomForestRegressor
+#Here n_estimators means number of trees you want to build before making the prediction
+rf = RandomForestRegressor(n_estimators=100) 
+rf.fit(X_train,y_train)
+y_pred = rf.predict(X_test)
+print(y_pred)
+
+#Metrics evaluatin for Random Forest
+R2_Random = r2_score(y_test,y_pred)
+print("R2 Random")
+print(R2_Random)
+print("MSE_Random")
+MSE_Random = mean_squared_error(y_test,y_pred)
+print(MSE_Random)
+
+print("RMSE")
+
+RMSE_Random = np.sqrt(MSE_Random)
+
+print(RMSE_Random)
