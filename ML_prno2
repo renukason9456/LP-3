@@ -1,0 +1,87 @@
+https://www.kaggle.com/datasets/balaka18/email-spam-classification-dataset-csv
+
+# Importing required libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, classification_report
+from sklearn.svm import SVC
+
+# Load the dataset
+df = pd.read_csv('C:/shubhangi/2023-24/LP-III_ML/Assignment 2/emails.csv')
+
+# Display first few rows
+print(df.head())
+
+# Display dataset shape
+print("Dataset Shape:", df.shape)
+
+# Split input and output data
+x = df.drop(['Email No.', 'Prediction'], axis=1)
+y = df['Prediction']
+
+# Display input data shape and types
+print("Input Shape:", x.shape)
+print("Data Types:\n", x.dtypes)
+
+# Visualize class distribution
+sns.countplot(x=y)
+plt.title("Email Class Distribution")
+plt.show()
+
+print("Class Counts:\n", y.value_counts())
+
+# Scale input data
+scaler = MinMaxScaler()
+x_scaled = scaler.fit_transform(x)
+print("Scaled Data:\n", x_scaled)
+
+# Train-test split (75% train, 25% test)
+x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, random_state=0, test_size=0.25)
+print("x_train:", x_train.shape)
+print("x_test:", x_test.shape)
+
+# ---- KNN MODEL ----
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(x_train, y_train)
+
+# Predict and evaluate KNN
+y_pred = knn.predict(x_test)
+ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+plt.show()
+
+print("KNN Accuracy:", accuracy_score(y_test, y_pred))
+print("Classification Report (KNN):\n", classification_report(y_test, y_pred))
+
+# ---- K VALUE ERROR ANALYSIS ----
+error = []
+for k in range(1, 41):
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(x_train, y_train)
+    pred = knn.predict(x_test)
+    error.append(np.mean(pred != y_test))
+
+# Plot error vs k
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, 41), error, marker='o', color='b')
+plt.title('K Value vs Error Rate')
+plt.xlabel('K Value')
+plt.ylabel('Error Rate')
+plt.show()
+
+# Best KNN (k=1) accuracy
+knn = KNeighborsClassifier(n_neighbors=1)
+knn.fit(x_train, y_train)
+y_pred = knn.predict(x_test)
+print("Best KNN (k=1) Accuracy:", accuracy_score(y_test, y_pred))
+
+# ---- SVM MODEL ----
+svm = SVC(kernel='linear')
+svm.fit(x_train, y_train)
+y_pred = svm.predict(x_test)
+
+print("SVM (Linear Kernel) Accuracy:", accuracy_score(y_test, y_pred))
